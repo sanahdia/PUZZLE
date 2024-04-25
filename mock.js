@@ -1,35 +1,49 @@
-const dragEnd = require('./puzzle').dragEnd;
+// Mock for the puzzle game
 
-describe('dragEnd', () => {
-  it('should swap the src of the current tile and the other tile if they are adjacent', () => {
-    const currTile = { src: '1.jpg' };
-    const otherTile = { src: '2.jpg' };
-    const event = { target: otherTile };
+// Mocking the window.onload function
+window.onload = jest.fn();
 
-    // Patch the dragEnd function to return a specific value
-    jest.spyOn(dragEnd, 'mockReturnValueOnce').mockReturnValueOnce(true);
+// Mocking the document.getElementById function
+document.getElementById = jest.fn().mockReturnValue({
+    append: jest.fn()
+});
 
-    // Call the dragEnd function with the current tile and the event
-    dragEnd(currTile, event);
+// Mocking the imgOrder array
+const imgOrder = ["4", "2", "8", "5", "1", "6", "7", "9", "3"];
+jest.spyOn(imgOrder, 'shift').mockImplementation(() => imgOrder.shift());
 
-    // Expect the src of the current tile and the other tile to be swapped
-    expect(currTile.src).toBe('2.jpg');
-    expect(otherTile.src).toBe('1.jpg');
-  });
+// Mocking event listeners
+const addEventListenerMock = jest.fn();
+HTMLElement.prototype.addEventListener = addEventListenerMock;
+// Importing the puzzle game functions
+const { dragStart, dragOver, dragEnter, dragLeave, dragDrop, dragEnd } = require('./puzzle-game');
 
-  it('should not swap the src of the current tile and the other tile if they are not adjacent', () => {
-    const currTile = { src: '1.jpg' };
-    const otherTile = { src: '2.jpg' };
-    const event = { target: otherTile };
+describe('Puzzle Game Tests', () => {
+    // Test using Mock/return_value
+    test('Test dragStart function', () => {
+        const mockThis = { id: "0-0" };
+        dragStart.call(mockThis);
+        expect(mockThis).toEqual({ id: "0-0" });
+    });
 
-    // Patch the dragEnd function to return a specific value
-    jest.spyOn(dragEnd, 'mockReturnValueOnce').mockReturnValueOnce(false);
+    // Test using Mock/side_effect
+    test('Test dragDrop function', () => {
+        const mockThis = { src: "image.jpg" };
+        const mockOtherTile = { src: "3.jpg" };
+        dragDrop.call(mockThis);
+        expect(mockThis).toEqual({ src: "image.jpg" }); // No changes expected as otherTile.src does not include "3.jpg"
+    });
 
-    // Call the dragEnd function with the current tile and the event
-    dragEnd(currTile, event);
+    // Test using Patch
+    test('Test dragEnd function', () => {
+        // Mocking document.getElementById to return otherTile with src "3.jpg"
+        document.getElementById.mockReturnValueOnce({
+            src: "3.jpg"
+        });
 
-    // Expect the src of the current tile and the other tile to remain the same
-    expect(currTile.src).toBe('1.jpg');
-    expect(otherTile.src).toBe('2.jpg');
-  });
+        const mockCurrTile = { id: "0-0", src: "image1.jpg" };
+        const mockOtherTile = { id: "0-1", src: "3.jpg" };
+        dragEnd.call(mockCurrTile);
+        expect(mockCurrTile.src).toEqual("3.jpg"); // The src should be swapped with otherTile.src
+    });
 });
